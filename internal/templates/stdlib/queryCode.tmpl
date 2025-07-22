@@ -35,7 +35,11 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
 {{if eq .Cmd ":many"}}
 {{range .Comments}}//{{.}}
 {{end -}}
-func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}) ([]{{.Ret.DefineType}}, error) {
+func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
+    {{- if hasOrderByReplace . -}}
+        , orderBy *func (string) string
+    {{- end -}}
+    ) ([]{{.Ret.DefineType}}, error) {
     {{- template "queryCodeStdExec" . }}
     if err != nil {
         return nil, err
@@ -109,8 +113,13 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
 {{end}}
 
 {{define "queryCodeStdExec"}}
-    {{- if .Arg.HasSqlcSlices }}
         query := {{.ConstantName}}
+    {{if hasOrderByReplace . -}}
+        if orderBy != nil {
+            query = (*orderBy)(query)
+        }
+    {{- end}}
+    {{- if .Arg.HasSqlcSlices }}
         var queryParams []interface{}
         {{- if .Arg.Struct }}
             {{- $arg := .Arg }}
@@ -148,8 +157,8 @@ func (q *Queries) {{.MethodName}}(ctx context.Context, {{ dbarg }} {{.Arg.Pair}}
         {{ queryRetval . }} {{ queryMethod . }}(ctx, query, queryParams...)
         {{- end -}}
     {{- else if emitPreparedQueries }}
-        {{- queryRetval . }} {{ queryMethod . }}(ctx, q.{{.FieldName}}, {{.ConstantName}}, {{.Arg.Params}})
+        {{- queryRetval . }} {{ queryMethod . }}(ctx, q.{{.FieldName}}, query, {{.Arg.Params}})
     {{- else}}
-        {{- queryRetval . }} {{ queryMethod . }}(ctx, {{.ConstantName}}, {{.Arg.Params}})
+        {{- queryRetval . }} {{ queryMethod . }}(ctx, query, {{.Arg.Params}})
     {{- end -}}
 {{end}}

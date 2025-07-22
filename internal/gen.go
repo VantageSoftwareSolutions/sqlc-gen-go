@@ -10,10 +10,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
-	"github.com/sqlc-dev/plugin-sdk-go/sdk"
 	"github.com/sqlc-dev/plugin-sdk-go/metadata"
 	"github.com/sqlc-dev/plugin-sdk-go/plugin"
+	"github.com/sqlc-dev/plugin-sdk-go/sdk"
+	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
 )
 
 type tmplCtx struct {
@@ -102,6 +102,10 @@ func (t *tmplCtx) codegenQueryRetval(q Query) (string, error) {
 	default:
 		return "", fmt.Errorf("unhandled q.Cmd case %q", q.Cmd)
 	}
+}
+
+func (t *tmplCtx) hasOrderByReplace(q Query) bool {
+	return strings.Contains(q.SQL, "ORDER BY ''")
 }
 
 func Generate(ctx context.Context, req *plugin.GenerateRequest) (*plugin.GenerateResponse, error) {
@@ -218,6 +222,7 @@ func generate(req *plugin.GenerateRequest, options *opts.Options, enums []Enum, 
 		"emitPreparedQueries": tctx.codegenEmitPreparedQueries,
 		"queryMethod":         tctx.codegenQueryMethod,
 		"queryRetval":         tctx.codegenQueryRetval,
+		"hasOrderByReplace":   tctx.hasOrderByReplace,
 	}
 
 	tmpl := template.Must(
