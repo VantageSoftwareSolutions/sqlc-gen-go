@@ -6,11 +6,14 @@ build:
 test: bin/sqlc-gen-go.wasm
 	go test ./...
 
-all: bin/sqlc-gen-go
+all: bin/sqlc-gen-go bin/sqlc-gen-go-arm
 	cp bin/sqlc-gen-go /mnt/c/tools
 
 bin/sqlc-gen-go: bin go.mod go.sum $(wildcard **/*.go)
-	cd plugin && go build -o ../bin/sqlc-gen-go ./main.go
+	cd plugin && GOARCH=arm64 go build -o ../bin/sqlc-gen-go ./main.go
+	
+bin/sqlc-gen-go-arm: bin go.mod go.sum $(wildcard **/*.go)
+	cd plugin && GOOS=linux GOARCH=arm64 go build -o ../bin/sqlc-gen-go-arm ./main.go
 
 bin/sqlc-gen-go.wasm: bin/sqlc-gen-go
 	cd plugin && GOOS=wasip1 GOARCH=wasm go build -o ../bin/sqlc-gen-go.wasm main.go

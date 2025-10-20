@@ -105,7 +105,8 @@ func (t *tmplCtx) codegenQueryRetval(q Query) (string, error) {
 }
 
 func (t *tmplCtx) hasOrderByReplace(q Query) bool {
-	return strings.Contains(q.SQL, "ORDER BY ''")
+	// return slices.Contains(q.Comments, "dynamic")
+	return strings.Contains(q.SQL, "ORDER BY 1 --dynamic") || strings.Contains(q.SQL, "ORDER BY ''")
 }
 
 func Generate(ctx context.Context, req *plugin.GenerateRequest) (*plugin.GenerateResponse, error) {
